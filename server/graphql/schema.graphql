@@ -1,0 +1,31 @@
+type User {
+  id: ID!
+  name: String!
+  documents: [Document]!
+  tweets: [Tweet]!
+}
+
+type Document {
+  id: ID!
+  title: String!
+  content: String!
+  images: [Image]!
+}
+
+type Tweet {
+  id: ID!
+  content: String!
+  image: Image
+}
+
+type Image {
+  id: ID!
+  url: String!
+}
+
+type Query {
+  users: [User]!
+  documents: [Document]!
+  tweets: [Tweet]!
+  images: [Image]!
+}
