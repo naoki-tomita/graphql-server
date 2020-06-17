@@ -135,7 +135,7 @@ async function main() {
     }
   }
 
-  const server = new ApolloServer({ typeDefs, resolvers: resolvers as any });
+  const server = new ApolloServer({ typeDefs, resolvers: resolvers as any, playground: true });
   server.listen(process.env.PORT || 8080);
 }
 
