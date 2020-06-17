@@ -136,7 +136,7 @@ async function main() {
   }
 
   const server = new ApolloServer({ typeDefs, resolvers: resolvers as any });
-  server.listen(8080);
+  server.listen(process.env.PORT || 8080);
 }
 
 main();
