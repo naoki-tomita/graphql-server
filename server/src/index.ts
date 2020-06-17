@@ -1,9 +1,18 @@
 import { ApolloServer, gql } from "apollo-server";
-import { QueryResolvers, User, Document, Image, Tweet } from "./generated/types";
+import { User, Document, Image, Tweet, Resolvers } from "./generated/types";
 import { readFile } from "fs";
 
 async function readFileAsync(path: string): Promise<string> {
   return new Promise((ok, ng) => readFile(path, (err, data) => err ? ng(err): ok(data.toString())));
+}
+
+type NullType = null | undefined;
+function isNullType(obj: any): obj is NullType {
+  return obj == null;
+}
+type NotNullType = string | number | object | any[]
+function isNonNullType(obj: any): obj is NotNullType {
+  return obj != null;
 }
 
 async function main() {
@@ -40,27 +49,34 @@ async function main() {
     return users.map((name, id) => ({
       id: id.toString(),
       name,
-      documents: findDocuments(id),
-      tweets: findTweets(id),
-    }));
+    })) as User[];
   }
-  function findDocuments(userId?: number): Document[] {
+  function findUser(id: string): User | null {
+    return (findUsers().find(it => it.id === id) || null);
+  }
+  function findUserByDocumentId(id: string) {
+    const document = documents.map((it, id) => ({ ...it, id: id.toString() })).find(it => it.id === id);
+    return findUser(document?.user.toString() || "");
+  }
+  function findUserByTweetId(id: string) {
+    const tweet = tweets.map((it, id) => ({ ...it, id: id.toString() })).find(it => it.id === id);
+    return findUser(tweet?.user.toString() || "");
+  }
+  function findDocuments(userId?: string): Document[] {
     return documents
-      .filter(it => (userId == null || it.user === userId))
-      .map(({ content, images, title }, id) => ({
+      .filter(it => (userId == null || it.user.toString() === userId))
+      .map(({ content, title }, id) => ({
         id: id.toString(),
         title, content,
-        images: images.map(id => findImage(id))
-      }));
+      })) as Document[];
   }
-  function findTweets(userId?: number): Tweet[] {
+  function findTweets(userId?: string): Tweet[] {
     return tweets
-      .filter(it => (userId == null || it.user === userId))
+      .filter(it => (userId == null || it.user.toString() === userId))
       .map(({ content, image }, id) => ({
         id: id.toString(),
         content,
-        image: (image != null ? findImage(image) : null)
-      }));
+      })) as Tweet[];
   }
   function findImages() {
     return images.map((url, id) => ({ id: id.toString(), url }));
@@ -69,22 +85,57 @@ async function main() {
     return findImages().find(it => it.id === id.toString()) ?? null;
   }
 
-  const Query: Required<QueryResolvers> = {
-    users() {
-      return findUsers();
+  function isImage(el: Image | null): el is Image {
+    return el != null;
+  }
+
+  const resolvers: Resolvers = {
+    Query: {
+      users(): User[] {
+        return findUsers();
+      },
+      user(_, { id }): User | null {
+        return findUsers().find(it => it.id === id) || null;
+      },
+      documents(): Document[] {
+        return findDocuments();
+      },
+      images(): Image[] {
+        return findImages();
+      },
+      tweets(): Tweet[] {
+        return findTweets();
+      }
     },
-    documents() {
-      return findDocuments();
+    User: {
+      documents(user): Document[] {
+        return findDocuments(user.id);
+      },
+      tweets(user): Tweet[] {
+        return findTweets(user.id);
+      }
     },
-    images() {
-      return findImages();
+    Document: {
+      user(document): User {
+        return findUserByDocumentId(document.id)!;
+      },
+      images(document): Image[] {
+        const images = documents.map((it, id) => ({ ...it, id: id.toString() })).find(it => it.id === document.id)!.images;
+        return images.map(it => findImage(it)).filter<Image>(isImage);
+      }
     },
-    tweets() {
-      return findTweets();
+    Tweet: {
+      user(tweet): User {
+        return findUserByTweetId(tweet.id)!;
+      },
+      image(tweet): Image | null {
+        const image = tweets.map((it, id) => ({ ...it, id: id.toString() })).find(it => it.id === tweet.id)!.image;
+        return findImage(image || -1) || null;
+      }
     }
   }
 
-  const server = new ApolloServer({ typeDefs, resolvers: { Query } });
+  const server = new ApolloServer({ typeDefs, resolvers: resolvers as any });
   server.listen(8080);
 }
 

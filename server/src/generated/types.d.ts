@@ -1,5 +1,6 @@
 import { GraphQLResolveInfo } from 'graphql';
 export type Maybe<T> = T | null;
+export type RequireFields<T, K extends keyof T> = { [X in Exclude<keyof T, K>]?: T[X] } & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: string;
@@ -23,6 +24,7 @@ export type Document = {
   title: Scalars['String'];
   content: Scalars['String'];
   images: Array<Maybe<Image>>;
+  user: User;
 };
 
 export type Tweet = {
@@ -30,6 +32,7 @@ export type Tweet = {
   id: Scalars['ID'];
   content: Scalars['String'];
   image?: Maybe<Image>;
+  user: User;
 };
 
 export type Image = {
@@ -41,9 +44,15 @@ export type Image = {
 export type Query = {
    __typename?: 'Query';
   users: Array<Maybe<User>>;
+  user?: Maybe<User>;
   documents: Array<Maybe<Document>>;
   tweets: Array<Maybe<Tweet>>;
   images: Array<Maybe<Image>>;
+};
+
+
+export type QueryUserArgs = {
+  id: Scalars['ID'];
 };
 
 
@@ -154,6 +163,7 @@ export type DocumentResolvers<ContextType = any, ParentType extends ResolversPar
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>,
   content?: Resolver<ResolversTypes['String'], ParentType, ContextType>,
   images?: Resolver<Array<Maybe<ResolversTypes['Image']>>, ParentType, ContextType>,
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>,
   __isTypeOf?: isTypeOfResolverFn<ParentType>,
 };
 
@@ -161,6 +171,7 @@ export type TweetResolvers<ContextType = any, ParentType extends ResolversParent
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>,
   content?: Resolver<ResolversTypes['String'], ParentType, ContextType>,
   image?: Resolver<Maybe<ResolversTypes['Image']>, ParentType, ContextType>,
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>,
   __isTypeOf?: isTypeOfResolverFn<ParentType>,
 };
 
@@ -172,6 +183,7 @@ export type ImageResolvers<ContextType = any, ParentType extends ResolversParent
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   users?: Resolver<Array<Maybe<ResolversTypes['User']>>, ParentType, ContextType>,
+  user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<QueryUserArgs, 'id'>>,
   documents?: Resolver<Array<Maybe<ResolversTypes['Document']>>, ParentType, ContextType>,
   tweets?: Resolver<Array<Maybe<ResolversTypes['Tweet']>>, ParentType, ContextType>,
   images?: Resolver<Array<Maybe<ResolversTypes['Image']>>, ParentType, ContextType>,

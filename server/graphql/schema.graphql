@@ -10,12 +10,14 @@ type Document {
   title: String!
   content: String!
   images: [Image]!
+  user: User!
 }
 
 type Tweet {
   id: ID!
   content: String!
   image: Image
+  user: User!
 }
 
 type Image {
@@ -25,6 +27,7 @@ type Image {
 
 type Query {
   users: [User]!
+  user(id: ID!): User
   documents: [Document]!
   tweets: [Tweet]!
   images: [Image]!
